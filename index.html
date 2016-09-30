@@ -19,10 +19,6 @@ function Paddle(initX, initY) {
     y += dy*dt/1000;
   };
 
-  this.follow = function(dt, tx, ty) {
-    y = ty;
-  };
-
   this.draw = function(ctx) {
     ctx.fillRect(x - w/2, y - h/2, w, h);
   };
@@ -120,7 +116,6 @@ onload = function() {
     player.move(dt, vy);
     player.draw(ctx);
 
-    computer.follow(dt, ball.getX(), ball.getY());
     computer.draw(ctx);
 
     if (status == Status.running) {

@@ -25,11 +25,7 @@ function Paddle(initX, initY) {
   };
 
   this.follow = function(dt, tx, ty) {
-    var dy = ty - y;
-    var cap = 100*dt/1000;
-    if (dy < -cap) dy = -cap;
-    if (cap < dy) dy = cap;
-    y += dy;
+    y = ty;
   };
 
   this.score = 0;
@@ -39,17 +35,9 @@ function Paddle(initX, initY) {
     ctx.fillRect(x - w/2, y - h/2, w, h);
   };
 
-  this.hit1 = function(px, py) { // 上
+  this.hit = function(px, py) {
     return x - w/2 < px && px < x + w/2
-        && y - h/2 < py && py < y - h/6;
-  };
-  this.hit2 = function(px, py) { // 中
-    return x - w/2 < px && px < x + w/2
-        && y - h/6 < py && py < y + h/6;
-  };
-  this.hit3 = function(px, py) { // 下
-    return x - w/2 < px && px < x + w/2
-        && y + h/6 < py && py < y + h/2;
+        && y - h/2 < py && py < y + h/2;
   };
 }
 
@@ -83,14 +71,9 @@ function Ball() {
       vy *= -1;
     }
 
-    if (player.hit1(x - w/2, y) || computer.hit1(x + w/2, y)
-     || player.hit3(x - w/2, y) || computer.hit3(x + w/2, y)) {
+    if (player.hit(x - w/2, y) || computer.hit(x + w/2, y)) {
       hitSound.play();
       vx *= -1;
-      radmizeVy();
-    } else if (player.hit2(x - w/2, y) || computer.hit2(x + w/2, y)) {
-      hitSound.play();
-      vx *= -1.2;
     }
   };
 

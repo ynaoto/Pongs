@@ -6,130 +6,106 @@
 </style>
 <canvas id="canvas" width="640" height="480"></canvas>
 <script>
-window.onload = function() {
+
+// https://www.freesound.org/
+var hitSound = new Audio('264447__kickhat__open-button-2.wav');
+var winSound = new Audio('267528__syseq__good.wav');
+var loseSound = new Audio('249616__vincentm400__function-fail.mp3');
+
+var keys = [];
+onkeydown = function(e) { keys[e.keyCode] = true; };
+onkeyup   = function(e) { keys[e.keyCode] = false; };
+
+function Paddle(initX, initY) {
+  var x = initX, y = initY;
+  var w = 10, h = 40;
+
+  this.move = function(dt, dy) {
+    y += dy*dt/1000;
+  };
+
+  this.follow = function(dt, tx, ty) {
+    var dy = ty - y;
+    var cap = 100*dt/1000;
+    if (dy < -cap) dy = -cap;
+    if (cap < dy) dy = cap;
+    y += dy;
+  };
+
+  this.score = 0;
+
+  this.draw = function(ctx) {
+    ctx.fillText(this.score, x, 10);
+    ctx.fillRect(x - w/2, y - h/2, w, h);
+  };
+
+  this.hit1 = function(px, py) { // 上
+    return x - w/2 < px && px < x + w/2
+        && y - h/2 < py && py < y - h/6;
+  };
+  this.hit2 = function(px, py) { // 中
+    return x - w/2 < px && px < x + w/2
+        && y - h/6 < py && py < y + h/6;
+  };
+  this.hit3 = function(px, py) { // 下
+    return x - w/2 < px && px < x + w/2
+        && y + h/6 < py && py < y + h/2;
+  };
+}
+
+function Ball() {
+  var x, y, vx, vy;
+  var w = 10, h = 10;
+
+  this.getX = function() { return x; }
+  this.getY = function() { return y; }
+
+  this.spawn = function(initX, initY) {
+    x = initX;
+    y = initY;
+    vx = vy = 0;
+  };
+
+  function radmizeVy() {
+    vy = 300*(0.5 - Math.random()); // pixels/s
+  }
+
+  this.fire = function() {
+    vx = 0.5 < Math.random() ? -100 : 100; // pixels/s
+    radmizeVy();
+  };
+
+  this.update = function(dt, canvas, player, computer) {
+    x += vx*dt/1000;
+    y += vy*dt/1000;
+
+    if (y < h/2 || canvas.height - h/2 < y) {
+      vy *= -1;
+    }
+
+    if (player.hit1(x - w/2, y) || computer.hit1(x + w/2, y)
+     || player.hit3(x - w/2, y) || computer.hit3(x + w/2, y)) {
+      hitSound.play();
+      vx *= -1;
+      radmizeVy();
+    } else if (player.hit2(x - w/2, y) || computer.hit2(x + w/2, y)) {
+      hitSound.play();
+      vx *= -1.2;
+    }
+  };
+
+  this.draw = function(ctx) {
+    ctx.fillRect(x - w/2, y - h/2, w, h);
+  };
+}
+
+onload = function() {
   var canvas = document.getElementById('canvas');
   var ctx = canvas.getContext('2d');
   var width = canvas.width;
   var height = canvas.height;
+
   var deadZoneWidth = 50;
-
-  var keys = [];
-  onkeydown = function(e) {
-    keys[e.keyCode] = true;
-  };
-  onkeyup = function(e) {
-    keys[e.keyCode] = false;
-  };
-
-  function Paddle(initX, initY) {
-    var x = initX, y = initY;
-    var w = 10, h = 40;
-
-    this.move = function(dt, dy) {
-      y += dy*dt/1000;
-    };
-
-    this.follow = function(dt, tx, ty) {
-      var dy = ty - y;
-      var cap = 100*dt/1000;
-      if (dy < -cap) dy = -cap;
-      if (cap < dy) dy = cap;
-      y += dy;
-    };
-
-    this.score = 0;
-
-    this.draw = function() {
-      ctx.fillText(this.score, x, 10);
-      ctx.fillRect(x - w/2, y - h/2, w, h);
-    };
-
-    this.hit = function(px, py) {
-
-      if (x - w/2 < px && px < x + w/2) {
-        if (y - h/2 < py && py < y - h/6) { // 上
-          return 1;
-        } else if (y - h/6 < py && py < y + h/6) { // 中
-          return 2;
-        } else if (y + h/6 < py && py < y + h/2)  { // 下
-          return 3;
-        }
-      }
-      return 0;
-    };
-  }
-
-  function Ball() {
-    var x, y, vx, vy;
-    var w = 10, h = 10;
-
-    this.getX = function() { return x; }
-    this.getY = function() { return y; }
-
-    this.spawn = function() {
-      x = width/2;
-      y = height/2;
-      vx = vy = 0;
-    };
-
-    function radmizeVy() {
-      vy = 300*(0.5 - Math.random()); // pixels/s
-    }
-
-    this.fire = function() {
-      vx = 0.5 < Math.random() ? -100 : 100; // pixels/s
-      radmizeVy();
-    };
-
-    this.update = function(dt, player, computer) {
-      x += vx*dt/1000;
-      y += vy*dt/1000;
-
-      if (y < 0) {
-        y = -y;
-        vy *= -1;
-      }
-      if (height < y) {
-        y = height - (y - height);
-        vy *= -1;
-      }
-
-      var hit;
-      hit = player.hit(x - w/2, y, vx, vy);
-      if (hit == 0) {
-        hit = computer.hit(x + w/2, y, vx, vy);
-      }
-      switch (hit) {
-      case 1: // 上
-        vx *= -1;
-        radmizeVy();
-        break;
-      case 2: // 中
-        vx *= -1.2;
-        break;
-      case 3: // 下
-        vx *= -1;
-        radmizeVy();
-        break;
-      }
-
-      if (x < deadZoneWidth/2) {
-        computer.score++;
-        return false;
-      }
-      if (width - deadZoneWidth/2 < x) {
-        player.score++;
-        return false;
-      }
-
-      return true;
-    };
-
-    this.draw = function() {
-      ctx.fillRect(x - w/2, y - h/2, w, h);
-    };
-  }
-
   var player = new Paddle(deadZoneWidth, height/2);
   var computer = new Paddle(width - deadZoneWidth, height/2);
   var ball = new Ball();
@@ -137,7 +113,7 @@ window.onload = function() {
   var Status = { ready: 0, running: 1 };
   var status = Status.ready;
 
-  ball.spawn();
+  ball.spawn(width/2, height/2);
 
   var lastTick = Date.now();
 
@@ -168,18 +144,27 @@ window.onload = function() {
       vy = 200; // pixels/s
     }
     player.move(dt, vy);
-    player.draw();
+    player.draw(ctx);
 
     computer.follow(dt, ball.getX(), ball.getY());
-    computer.draw();
+    computer.draw(ctx);
 
     if (status == Status.running) {
-      if (!ball.update(dt, player, computer)) {
-        ball.spawn();
+      ball.update(dt, canvas, player, computer);
+      var bx = ball.getX();
+      if (bx < 0) {
+        loseSound.play();
+        computer.score++;
+        ball.spawn(width/2, height/2);
+        status = Status.ready;
+      } else if (width < bx) {
+        winSound.play();
+        player.score++;
+        ball.spawn(width/2, height/2);
         status = Status.ready;
       }
     }
-    ball.draw();
+    ball.draw(ctx);
 
     requestAnimationFrame(loop);
   })();

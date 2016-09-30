@@ -28,10 +28,7 @@ function Paddle(initX, initY) {
     y = ty;
   };
 
-  this.score = 0;
-
   this.draw = function(ctx) {
-    ctx.fillText(this.score, x, 10);
     ctx.fillRect(x - w/2, y - h/2, w, h);
   };
 
@@ -137,12 +134,10 @@ onload = function() {
       var bx = ball.getX();
       if (bx < 0) {
         loseSound.play();
-        computer.score++;
         ball.spawn(width/2, height/2);
         status = Status.ready;
       } else if (width < bx) {
         winSound.play();
-        player.score++;
         ball.spawn(width/2, height/2);
         status = Status.ready;
       }

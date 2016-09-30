@@ -7,11 +7,6 @@
 <canvas id="canvas" width="640" height="480"></canvas>
 <script>
 
-// https://www.freesound.org/
-var hitSound = new Audio('264447__kickhat__open-button-2.wav');
-var winSound = new Audio('267528__syseq__good.wav');
-var loseSound = new Audio('249616__vincentm400__function-fail.mp3');
-
 var keys = [];
 onkeydown = function(e) { keys[e.keyCode] = true; };
 onkeyup   = function(e) { keys[e.keyCode] = false; };
@@ -69,7 +64,6 @@ function Ball() {
     }
 
     if (player.hit(x - w/2, y) || computer.hit(x + w/2, y)) {
-      hitSound.play();
       vx *= -1;
     }
   };
@@ -132,12 +126,7 @@ onload = function() {
     if (status == Status.running) {
       ball.update(dt, canvas, player, computer);
       var bx = ball.getX();
-      if (bx < 0) {
-        loseSound.play();
-        ball.spawn(width/2, height/2);
-        status = Status.ready;
-      } else if (width < bx) {
-        winSound.play();
+      if (bx < 0 || width < bx) {
         ball.spawn(width/2, height/2);
         status = Status.ready;
       }
